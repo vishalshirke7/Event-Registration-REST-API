@@ -48,8 +48,34 @@ class PublicEventsListSerializer(serializers.ModelSerializer):
         exclude = ('organizer', 'id', 'private')
 
 
-class RegisterOrUnregisterForEvent(serializers.ModelSerializer):
+class RegisterOrUnregisterForEvent(serializers.Serializer):
+
+    title = serializers.CharField()
+    accepted = serializers.BooleanField()
+
+    def update(self, instance, validated_data):
+        instance.accepted = validated_data.get('accepted', instance.accepted)
+        instance.save()
+        return instance
+
+
+class LimitAttendeesSerializer(serializers.Serializer):
+
+    id = serializers.IntegerField()
+    max_attendees = serializers.IntegerField()
+
+    def update(self, instance, validated_data):
+        # instance.id = validated_data.get('event_id', instance.id)
+        instance.max_attendees = validated_data.get('max_attendees', instance.max_attendees)
+        instance.save()
+        return instance
+
+
+class ListOfIndividuallyCreatedEventsSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = InvitationsSent
-        exclude = ('organizer', 'id', 'email')
+        model = Event
+        fields = '__all__'
+
+
+

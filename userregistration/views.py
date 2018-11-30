@@ -11,6 +11,10 @@ from .models import User
 
 
 class UserRegistration(APIView):
+    """
+    Registering a new User. (This is initial step) Everyone has to register for creating/inviting/participating
+    in any event
+    """
 
     serializer_class = UserRegistrationSerializer
 
@@ -31,7 +35,9 @@ class UserRegistration(APIView):
 
 
 class UserLogin(APIView):
-
+    """
+    User Login
+    """
     serializer_class = UserLoginSerializer
 
     def get(self, request, format=None):
@@ -50,7 +56,9 @@ class UserLogin(APIView):
 
 
 class Logout(APIView):
-
+    """
+    User Logout
+    """
     def get(self, request, format=None):
         if 'user_id' in request.session:
             del request.session['user_id']

@@ -10,4 +10,5 @@ urlpatterns = [
     path('invite-users/', views.InviteUsers.as_view(), name='invite_user'),
     path('view-all-events/', views.ViewPublicEvents.as_view(), name='view-events'),
     path('register-unregister/', views.RegisterUnregisterForEvent.as_view(), name='register-unregister'),
+    path('limit-attendees/', views.LimitNumberOfAttendees.as_view(), name='limit-attendees'),
 ]

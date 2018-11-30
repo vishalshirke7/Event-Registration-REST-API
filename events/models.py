@@ -11,6 +11,7 @@ class Event(models.Model):
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     private = models.BooleanField(default=False)
+    max_attendees = models.IntegerField(default=50)
 
 
 class InvitationsSent(models.Model):

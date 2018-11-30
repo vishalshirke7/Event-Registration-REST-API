@@ -2,14 +2,13 @@ from functools import partial
 from django.shortcuts import render
 from django.http import HttpResponse
 
-from rest_framework import viewsets, views, generics, status, permissions
-from rest_framework.parsers import JSONParser
+from rest_framework import status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .serializers import CreateEventSerializer, ListOfEvents, InvitationsSerializer, ListOfInvitedUsers\
-                         , PublicEventsListSerializer, RegisterOrUnregisterForEvent
-
+                         , PublicEventsListSerializer, RegisterOrUnregisterForEvent, LimitAttendeesSerializer\
+                         , ListOfIndividuallyCreatedEventsSerializer
 from .models import Event, InvitationsSent
 from userregistration.models import User
 
@@ -25,7 +24,9 @@ class CustomPermissionsForUser(permissions.BasePermission):
 
 
 class CreateEvent(APIView):
-
+    """
+    Create an Event or List all Events
+    """
     serializer_class = CreateEventSerializer
     permission_classes = (partial(CustomPermissionsForUser, ['GET', 'HEAD', 'POST']),)
 
@@ -45,7 +46,9 @@ class CreateEvent(APIView):
 
 
 class InviteUsers(APIView):
-
+    """
+    Invite other users for an event created by you.
+    """
     serializer_class = InvitationsSerializer
     permission_classes = (partial(CustomPermissionsForUser, ['GET', 'HEAD', 'POST']),)
 
@@ -62,12 +65,15 @@ class InviteUsers(APIView):
             user = User.objects.get(pk=request.session['user_id'])
             event = Event.objects.get(pk=request.data['event'])
             serializer.save(organizer=user, event=event)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ViewPublicEvents(APIView):
+    """
 
+    View all public events
+    """
     # serializer_class = PublicEventsListSerializer
     permission_classes = (partial(CustomPermissionsForUser, ['GET', 'HEAD']),)
 
@@ -79,7 +85,10 @@ class ViewPublicEvents(APIView):
 
 
 class RegisterUnregisterForEvent(APIView):
-
+    """
+    Register or Unregister (i.e accept/reject an invitation for a event organized by other users)4
+    This also checks for previously registered event and if it is overlapping then it does not register for event
+    """
     serializer_class = RegisterOrUnregisterForEvent
     permission_classes = (partial(CustomPermissionsForUser, ['GET', 'HEAD', 'POST']),)
 
@@ -91,11 +100,37 @@ class RegisterUnregisterForEvent(APIView):
 
     def post(self, request, format=None):
         user = User.objects.get(pk=request.session['user_id'])
-        event = Event.objects.get(pk=request.data['event'])
+        event = Event.objects.get(title=request.data.get('title'))
         invitation = InvitationsSent.objects.get(email=user.email, event=event)
         serializer = RegisterOrUnregisterForEvent(invitation, data=request.data)
 
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LimitNumberOfAttendees(APIView):
+    """
+    Limit number of attendees at anytime by changing the number of attendees
+    """
+
+    serializer_class = LimitAttendeesSerializer
+    permission_classes = (partial(CustomPermissionsForUser, ['GET', 'HEAD', 'POST']),)
+
+    def get(self, request, format=None):
+        user = User.objects.get(pk=request.session['user_id'])
+        events = Event.objects.filter(organizer=user)
+        serializer = ListOfIndividuallyCreatedEventsSerializer(events, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, format=None):
+        user = User.objects.get(pk=request.session['user_id'])
+        event = Event.objects.get(pk=request.data.get('id'))
+        serializer = LimitAttendeesSerializer(event, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
