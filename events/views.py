@@ -1,6 +1,4 @@
 from functools import partial
-from django.shortcuts import render
-from django.http import HttpResponse
 
 from rest_framework import status, permissions
 from rest_framework.response import Response
@@ -87,7 +85,8 @@ class ViewPublicEvents(APIView):
 class RegisterUnregisterForEvent(APIView):
     """
     Register or Unregister (i.e accept/reject an invitation for a event organized by other users)4
-    This also checks for previously registered event and if it is overlapping then it does not register for event
+    This also checks for previously registered event and if it is overlapping then
+    it does not register for event
     """
     serializer_class = RegisterOrUnregisterForEvent
     permission_classes = (partial(CustomPermissionsForUser, ['GET', 'HEAD', 'POST']),)
